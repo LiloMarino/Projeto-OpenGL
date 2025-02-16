@@ -23,20 +23,16 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++17 -g -I$(THIRD_PARTY_DIR) -I$(INCLUDE_DIR)
 
 # Flags para OpenGL e GLFW
-LDFLAGS = -lGL -lGLU -lglfw
+LDFLAGS = -lGL -lGLU -lGLEW -lglfw -lassimp
 
 # Alvo padrão
 all: $(EXEC_NAME)
 
 # Regra de compilação do executável
-$(EXEC_NAME): $(LIB_OBJECTS) $(SRC_OBJECTS) $(GLAD_OBJECT)
+$(EXEC_NAME): $(SRC_OBJECTS) $(GLAD_OBJECT)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Regras para compilar arquivos .cpp em .o
-$(BUILD_DIR)/%.o: $(LIB_DIR)/%.cpp
-	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -49,7 +45,7 @@ $(BUILD_DIR)/glad.o: $(GLAD_SOURCE)
 # Instalar dependências automaticamente
 install_deps:
 	sudo apt update
-	sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev
+	sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev
 
 # Alvo para limpar os arquivos gerados
 clean:
@@ -61,7 +57,7 @@ run: all
 
 # Alvo para criar um zip com os arquivos fonte
 zip:
-	zip -r $(ZIP_NAME).zip $(SRC_DIR) $(LIB_DIR) $(THIRD_PARTY_DIR) $(INCLUDE_DIR) Makefile README.md
+	zip -r $(ZIP_NAME).zip $(SRC_DIR) $(THIRD_PARTY_DIR) $(INCLUDE_DIR) Makefile README.md
 	mkdir -p $(ZIP_NAME)
 	unzip -q $(ZIP_NAME).zip -d $(ZIP_NAME)
 

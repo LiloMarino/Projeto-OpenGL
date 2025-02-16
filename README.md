@@ -3,6 +3,7 @@
 Para compilar e executar este projeto, você precisa das seguintes bibliotecas:
 
 - **GLFW** (para gerenciamento de janelas e entrada)
+- **GLEW** (para carregar funções modernas da OpenGL)
 - **Assimp** (para carregamento de modelos 3D)
 - **OpenGL** (biblioteca gráfica)
 
@@ -12,7 +13,7 @@ Para compilar e executar este projeto, você precisa das seguintes bibliotecas:
 Execute o seguinte comando no terminal:
 ```bash
 sudo apt update
-sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev
+sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev
 ```
 ou
 ```bash
@@ -22,13 +23,13 @@ make install_deps
 ### 🍏 **macOS (Homebrew)**
 Se você usa **Homebrew**, instale as dependências com:
 ```bash
-brew install glfw assimp
+brew install glfw assimp glew
 ```
 
 ### 🖥️ **Windows (vcpkg)**
 Para Windows, usando **vcpkg**, instale com:
 ```powershell
-vcpkg install glfw3 assimp
+vcpkg install glfw3 assimp glew
 ```
 
 ## 🚀 Compilação e Execução
