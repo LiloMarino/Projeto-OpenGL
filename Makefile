@@ -46,6 +46,11 @@ $(BUILD_DIR)/glad.o: $(GLAD_SOURCE)
 	@mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Instalar dependências automaticamente
+install_deps:
+	sudo apt update
+	sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev
+
 # Alvo para limpar os arquivos gerados
 clean:
 	rm -rf $(BUILD_DIR) $(EXEC_NAME)
@@ -56,7 +61,7 @@ run: all
 
 # Alvo para criar um zip com os arquivos fonte
 zip:
-	zip -r $(ZIP_NAME).zip $(SRC_DIR) $(LIB_DIR) $(THIRD_PARTY_DIR) $(INCLUDE_DIR) Makefile
+	zip -r $(ZIP_NAME).zip $(SRC_DIR) $(LIB_DIR) $(THIRD_PARTY_DIR) $(INCLUDE_DIR) Makefile README.md
 	mkdir -p $(ZIP_NAME)
 	unzip -q $(ZIP_NAME).zip -d $(ZIP_NAME)
 
