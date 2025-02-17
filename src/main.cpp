@@ -10,20 +10,7 @@
 #include <assimp/postprocess.h>
 #include <map>
 #include <cmath>
-
-#define DEG2RAD 3.14159265358979323846 / 180.0
-
-void calculateDirection(double rotX, double rotY, double rotZ, double &dirX, double &dirY, double &dirZ)
-{
-    // Converter para radianos
-    double yaw = rotY * DEG2RAD;   // Rotação ao redor do eixo Y (horizontal)
-    double pitch = rotX * DEG2RAD; // Rotação ao redor do eixo X (vertical)
-
-    // Cálculo da direção a partir dos ângulos
-    dirX = cos(yaw) * cos(pitch);
-    dirY = sin(pitch);
-    dirZ = sin(yaw) * cos(pitch);
-}
+#include "camera3d.hpp"
 
 // Estrutura para armazenar vértices e texturas
 struct Vertex
@@ -169,44 +156,12 @@ void drawModel()
 }
 
 // Função de renderização
-void display(GLFWwindow *window)
+void display(GLFWwindow *window, const Camera3D &camera)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    // Alterar o FOV para 39.6° (calculado anteriormente)
-    gluPerspective(39.6, 800.0 / 600.0, 0.1, 1000.0);  // FOV alterado de 50.0 para 39.6
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    // Posição da câmera no Blender
-    double Blender_X = 0, Blender_Y = -9.0, Blender_Z = 16.0;
-
-    // Rotação da câmera no Blender (em graus)
-    double rotX = 90.0, rotY = 0.0, rotZ = 0.0;
-
-    // Converter coordenadas do Blender para OpenGL
-    double eyeX = Blender_X;
-    double eyeY = Blender_Y;  // Z do Blender vira Y no OpenGL
-    double eyeZ = Blender_Z; // Y do Blender vira -Z no OpenGL
-
-    // Calcular direção da câmera
-    double dirX, dirY, dirZ;
-    calculateDirection(rotX, rotY, rotZ, dirX, dirY, dirZ);
-
-    // Definir ponto para onde a câmera olha
-    double centerX = 0;
-    double centerY = eyeZ + dirY;
-    double centerZ = -eyeY + dirZ;
-
-    // Vetor "para cima" (normalmente fixo)
-    double upX = 0.0, upY = 1.0, upZ = 0.0;
-
-    // Aplicar no OpenGL
-    gluLookAt(0, -9, 16, centerX, centerY, centerZ, upX, upY, upZ);
+    // Aplica a câmera
+    camera.applyCamera(); // Agora isso cuida de gluPerspective e gluLookAt
 
     drawModel();
 
@@ -231,6 +186,9 @@ int main()
 
     glfwMakeContextCurrent(window);
 
+    // Inicializa a câmera
+    Camera3D camera(0.0, -9.0, 16.0, 90.0, 0.0, 0.0, 50.0, 36.0, 800.0 / 600.0, 0.1, 1000.0);
+
     if (!loadModel("Mita/Mita (orig).fbx", "Mita"))
     {
         return -1;
@@ -240,7 +198,7 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        display(window);
+        display(window, camera);  // Passe a câmera para o display
         glfwPollEvents();
     }
 
