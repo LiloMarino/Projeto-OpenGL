@@ -37,11 +37,20 @@ struct SubMesh
 
 /**
  * @brief Estrutura para armazenar os dados de um bone.
+ *
+ * Foram adicionados:
+ * - defaultLocalTransform: a transformação local (bind pose) do nó correspondente;
+ * - manualRotation: rotação manual aplicada (inicialmente identidade);
+ * - parentIndex: índice do osso pai (-1 se não houver);
+ * - finalTransformation: transformação final que será aplicada aos vértices.
  */
 struct BoneInfo
 {
-    aiMatrix4x4 offsetMatrix;          ///< Matriz de offset (bind pose)
-    aiMatrix4x4 finalTransformation;   ///< Transformação final (aplicada na animação ou rotação manual)
+    aiMatrix4x4 offsetMatrix;          
+    aiMatrix4x4 defaultLocalTransform; // transform local (bind pose) extraída do nó
+    aiMatrix4x4 manualRotation;        // rotação manual (inicialmente identidade)
+    aiMatrix4x4 finalTransformation;   // transformação final: (globalTransform * offsetMatrix)
+    int parentIndex;                   // índice do osso pai (-1 se for raiz)
 };
 
 class Character3D
@@ -90,6 +99,11 @@ private:
      * @return GLuint ID da textura.
      */
     GLuint loadTexture(const std::string &path);
+
+    // Funções auxiliares para atualização da hierarquia dos bones
+    void updateBoneTransforms();
+    void readHierarchy(const aiNode* node, const aiMatrix4x4 &parentTransform, int parentBoneIndex);
+    aiMatrix4x4 computeGlobalTransform(int boneIndex) const;
 };
 
 #endif

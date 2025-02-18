@@ -145,7 +145,10 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
 
                     BoneInfo info;
                     info.offsetMatrix = bone->mOffsetMatrix;
-                    info.finalTransformation = aiMatrix4x4(); // identidade
+                    info.defaultLocalTransform = aiMatrix4x4(); // identidade por padrão
+                    info.manualRotation = aiMatrix4x4();        // identidade
+                    info.finalTransformation = aiMatrix4x4();     // identidade
+                    info.parentIndex = -1;
                     boneInfo.push_back(info);
                 }
                 else
@@ -175,11 +178,19 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
         submeshes.push_back(submesh);
     }
 
+    // Após processar os meshes, percorre a hierarquia de nós para preencher a transformação local (bind pose)
+    // e o relacionamento pai-filho dos bones.
+    readHierarchy(scene->mRootNode, aiMatrix4x4(), -1);
+
     return true;
 }
 
 void Character3D::draw() const
 {
+    // Atualiza as transformações finais dos bones respeitando a hierarquia.
+    // Como draw() é const, usamos const_cast para chamar a função não-const.
+    const_cast<Character3D*>(this)->updateBoneTransforms();
+
     // Para cada submesh, aplica a textura e desenha os triângulos
     for (const auto &sub : submeshes)
     {
@@ -231,6 +242,52 @@ void Character3D::rotateBone(const std::string &boneName, float angle, float axi
         return;
     }
     int index = boneMapping[boneName];
-    // Cria uma matriz de rotação e atualiza a transformação final do bone.
-    boneInfo[index].finalTransformation = createRotationMatrix(angle, axisX, axisY, axisZ);
+    // Em vez de sobrescrever a transformação final, atualizamos a rotação manual.
+    boneInfo[index].manualRotation = createRotationMatrix(angle, axisX, axisY, axisZ);
+}
+
+// ----- Funções auxiliares para hierarquia de bones -----
+
+// Percorre a hierarquia de nós do Assimp para identificar os ossos e salvar sua transformação local e o relacionamento pai-filho.
+// parentBoneIndex: índice do osso pai (se o nó pai também for um bone); -1 se não houver.
+void Character3D::readHierarchy(const aiNode* node, const aiMatrix4x4 &parentTransform, int parentBoneIndex)
+{
+    aiMatrix4x4 currentTransform = parentTransform * node->mTransformation;
+    int currentBoneIndex = parentBoneIndex;
+    std::string nodeName(node->mName.C_Str());
+
+    if (boneMapping.find(nodeName) != boneMapping.end())
+    {
+        currentBoneIndex = boneMapping[nodeName];
+        // Define o índice do osso pai (poderá ser -1 se for raiz)
+        boneInfo[currentBoneIndex].parentIndex = parentBoneIndex;
+        // Salva a transformação local do nó (bind pose)
+        boneInfo[currentBoneIndex].defaultLocalTransform = node->mTransformation;
+    }
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        readHierarchy(node->mChildren[i], currentTransform, currentBoneIndex);
+    }
+}
+
+// Função recursiva que calcula a transformação global de um osso a partir de sua transformação local (modificada pela rotação manual)
+// e da transformação global de seu pai.
+aiMatrix4x4 Character3D::computeGlobalTransform(int boneIndex) const
+{
+    if (boneInfo[boneIndex].parentIndex == -1)
+        return boneInfo[boneIndex].defaultLocalTransform * boneInfo[boneIndex].manualRotation;
+    else
+        return computeGlobalTransform(boneInfo[boneIndex].parentIndex) * (boneInfo[boneIndex].defaultLocalTransform * boneInfo[boneIndex].manualRotation);
+}
+
+// Atualiza, para cada bone, sua transformação final usada para skinning:
+// finalTransformation = (transformação global do bone) * (offsetMatrix do bone)
+void Character3D::updateBoneTransforms()
+{
+    for (unsigned int i = 0; i < boneInfo.size(); i++)
+    {
+        aiMatrix4x4 global = computeGlobalTransform(i);
+        boneInfo[i].finalTransformation = global * boneInfo[i].offsetMatrix;
+    }
 }
