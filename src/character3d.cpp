@@ -3,16 +3,22 @@
 #include <iostream>
 #include <cmath>
 
-// Função auxiliar para criar uma matriz de rotação em torno de um eixo (fórmula de Rodrigues)
 aiMatrix4x4 createRotationMatrix(float angle, float x, float y, float z)
 {
+    // Converter ângulo de graus para radianos e calcular cosseno e seno
     float rad = angle * 3.14159265f / 180.0f;
     float c = cos(rad);
     float s = sin(rad);
-    float len = sqrt(x * x + y * y + z * z);
-    if (len == 0) len = 1.0f;
-    x /= len; y /= len; z /= len;
 
+    // Calcular o comprimento do vetor de rotação e normalizá-lo
+    float len = sqrt(x * x + y * y + z * z);
+    if (len == 0)
+        len = 1.0f;
+    x /= len;
+    y /= len;
+    z /= len;
+
+    // Calcular os elementos da matriz de rotação utilizando a fórmula de Rodrigues
     aiMatrix4x4 rot;
     rot.a1 = c + (1 - c) * x * x;
     rot.a2 = (1 - c) * x * y - s * z;
@@ -29,6 +35,7 @@ aiMatrix4x4 createRotationMatrix(float angle, float x, float y, float z)
     rot.c3 = c + (1 - c) * z * z;
     rot.c4 = 0.0f;
 
+    // Definir a última linha para coordenadas homogêneas
     rot.d1 = 0.0f;
     rot.d2 = 0.0f;
     rot.d3 = 0.0f;
@@ -39,6 +46,7 @@ aiMatrix4x4 createRotationMatrix(float angle, float x, float y, float z)
 
 Character3D::Character3D()
 {
+    // Inicializa os containers, garantindo que não haja resíduos de dados anteriores
     submeshes.clear();
     textureMap.clear();
     boneMapping.clear();
@@ -47,6 +55,7 @@ Character3D::Character3D()
 
 GLuint Character3D::loadTexture(const std::string &path)
 {
+    // Carrega os dados da imagem a partir do arquivo utilizando stb_image
     int width, height, channels;
     unsigned char *data = stbi_load(path.c_str(), &width, &height, &channels, 4);
     if (!data)
@@ -54,55 +63,59 @@ GLuint Character3D::loadTexture(const std::string &path)
         std::cerr << "Erro ao carregar textura: " << path << std::endl;
         return 0;
     }
+
+    // Gera e configura a textura no OpenGL
     GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Libera os dados da imagem e retorna o ID da textura
     stbi_image_free(data);
     return textureID;
 }
 
 bool Character3D::loadModel(const std::string &path, const std::string &textureDir)
 {
+    // Carrega a cena do modelo utilizando Assimp com triangulação e ajuste de UVs
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
-
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
         std::cerr << "Erro ao carregar modelo: " << importer.GetErrorString() << std::endl;
         return false;
     }
 
+    // Limpa os dados anteriores
     submeshes.clear();
     boneMapping.clear();
     boneInfo.clear();
 
-    // Processa cada mesh do modelo
+    // Processa cada mesh presente na cena
     for (unsigned int i = 0; i < scene->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[i];
-
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
         aiString texturePath;
         GLuint texID = 0;
 
+        // Se o material possuir textura difusa, carrega-a e atualiza o cache
         if (material->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS)
         {
             std::string fullTexturePath = textureDir + "/" + texturePath.C_Str();
             if (textureMap.find(fullTexturePath) == textureMap.end())
-            {
                 textureMap[fullTexturePath] = loadTexture(fullTexturePath);
-            }
             texID = textureMap[fullTexturePath];
             std::cout << "Carregando textura: " << fullTexturePath << std::endl;
         }
 
+        // Inicializa o submesh com a textura carregada
         SubMesh submesh;
         submesh.textureID = texID;
 
-        // Processa vértices
+        // Processa os vértices do mesh
         for (unsigned int v = 0; v < mesh->mNumVertices; v++)
         {
             Vertex vert;
@@ -110,6 +123,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
             vert.y = mesh->mVertices[v].y;
             vert.z = mesh->mVertices[v].z;
 
+            // Verifica se há coordenadas de textura; caso contrário, define como zero
             if (mesh->mTextureCoords[0])
             {
                 vert.u = mesh->mTextureCoords[0][v].x;
@@ -120,7 +134,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
                 vert.u = vert.v = 0.0f;
             }
 
-            // Inicializa os dados de bone para o vértice
+            // Inicializa os dados de skinning (bones) para o vértice
             for (int j = 0; j < 4; j++)
             {
                 vert.boneIDs[j] = 0;
@@ -129,7 +143,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
             submesh.vertices.push_back(vert);
         }
 
-        // Se o mesh possuir bones, processa-os
+        // Se o mesh contiver bones, processa os dados de cada bone
         if (mesh->HasBones())
         {
             for (unsigned int b = 0; b < mesh->mNumBones; b++)
@@ -138,6 +152,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
                 std::string boneName(bone->mName.C_Str());
                 int boneIndex = 0;
 
+                // Verifica se o bone já foi mapeado; caso contrário, adiciona-o
                 if (boneMapping.find(boneName) == boneMapping.end())
                 {
                     boneIndex = boneInfo.size();
@@ -147,7 +162,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
                     info.offsetMatrix = bone->mOffsetMatrix;
                     info.defaultLocalTransform = aiMatrix4x4(); // identidade por padrão
                     info.manualRotation = aiMatrix4x4();        // identidade
-                    info.finalTransformation = aiMatrix4x4();     // identidade
+                    info.finalTransformation = aiMatrix4x4();   // identidade
                     info.parentIndex = -1;
                     boneInfo.push_back(info);
                 }
@@ -156,7 +171,7 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
                     boneIndex = boneMapping[boneName];
                 }
 
-                // Para cada peso deste bone, associa ao vértice correspondente
+                // Associa cada peso do bone ao vértice correspondente
                 for (unsigned int w = 0; w < bone->mNumWeights; w++)
                 {
                     unsigned int vertexID = bone->mWeights[w].mVertexId;
@@ -175,11 +190,12 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
             }
         }
 
+        // Adiciona o submesh processado à lista de submeshes
         submeshes.push_back(submesh);
     }
 
-    // Após processar os meshes, percorre a hierarquia de nós para preencher a transformação local (bind pose)
-    // e o relacionamento pai-filho dos bones.
+    // Após processar os meshes, percorre a hierarquia de nós para definir as transformações locais (bind pose) e
+    // estabelecer o relacionamento pai-filho dos bones.
     readHierarchy(scene->mRootNode, aiMatrix4x4(), -1);
 
     return true;
@@ -187,22 +203,23 @@ bool Character3D::loadModel(const std::string &path, const std::string &textureD
 
 void Character3D::draw() const
 {
-    // Atualiza as transformações finais dos bones respeitando a hierarquia.
+    // Atualiza as transformações finais dos bones, respeitando a hierarquia.
     // Como draw() é const, usamos const_cast para chamar a função não-const.
-    const_cast<Character3D*>(this)->updateBoneTransforms();
+    const_cast<Character3D *>(this)->updateBoneTransforms();
 
-    // Para cada submesh, aplica a textura e desenha os triângulos
+    // Para cada submesh, vincula a textura e desenha os triângulos
     for (const auto &sub : submeshes)
     {
         glBindTexture(GL_TEXTURE_2D, sub.textureID);
         glBegin(GL_TRIANGLES);
         for (const auto &vert : sub.vertices)
         {
-            // Aplica a transformação dos bones se houver influência
+            // Calcula a posição final do vértice considerando a influência dos bones
             aiVector3D pos(vert.x, vert.y, vert.z);
             aiVector3D finalPos(0, 0, 0);
             float totalWeight = 0.0f;
 
+            // Aplica a transformação de cada bone que influencia o vértice
             for (int i = 0; i < 4; i++)
             {
                 if (vert.weights[i] > 0.0f)
@@ -221,11 +238,9 @@ void Character3D::draw() const
                 }
             }
 
-            // Se nenhum bone influenciar, usa a posição original
+            // Se nenhum bone influenciar o vértice, utiliza a posição original
             if (totalWeight == 0.0f)
-            {
                 finalPos = pos;
-            }
 
             glTexCoord2f(vert.u, vert.v);
             glVertex3f(finalPos.x, finalPos.y, finalPos.z);
@@ -236,29 +251,31 @@ void Character3D::draw() const
 
 void Character3D::rotateBone(const std::string &boneName, float angle, float axisX, float axisY, float axisZ)
 {
+    // Verifica se o bone existe no mapeamento
     if (boneMapping.find(boneName) == boneMapping.end())
     {
         std::cerr << "Bone '" << boneName << "' não encontrada!" << std::endl;
         return;
     }
+
+    // Atualiza a rotação manual do bone utilizando a matriz de rotação criada
     int index = boneMapping[boneName];
-    // Em vez de sobrescrever a transformação final, atualizamos a rotação manual.
     boneInfo[index].manualRotation = createRotationMatrix(angle, axisX, axisY, axisZ);
 }
 
-void Character3D::rotateBone(const std::string &boneName, const glm::quat& rotation)
+void Character3D::rotateBone(const std::string &boneName, const glm::quat &rotation)
 {
-    // Verifica se o osso existe no mapa
+    // Procura o bone no mapa de bones
     auto it = boneMapping.find(boneName);
     if (it != boneMapping.end())
     {
-        int boneIndex = it->second;  // Obtém o índice do osso
+        int boneIndex = it->second; // Obtém o índice do bone
         BoneInfo &bone = boneInfo[boneIndex];
 
-        // Aplica a rotação manual
-        glm::mat4 rotationMatrix = glm::mat4_cast(rotation);  // Converte o quaternion para uma matriz
+        // Converte o quaternion para uma matriz 4x4 usando glm
+        glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
 
-        // Aplica a rotação ao osso, combinando com a rotação já existente
+        // Atualiza a rotação manual do bone combinando com a rotação já existente
         bone.manualRotation = aiMatrix4x4(rotationMatrix[0][0], rotationMatrix[0][1], rotationMatrix[0][2], rotationMatrix[0][3],
                                           rotationMatrix[1][0], rotationMatrix[1][1], rotationMatrix[1][2], rotationMatrix[1][3],
                                           rotationMatrix[2][0], rotationMatrix[2][1], rotationMatrix[2][2], rotationMatrix[2][3],
@@ -269,45 +286,43 @@ void Character3D::rotateBone(const std::string &boneName, const glm::quat& rotat
         std::cerr << "Bone " << boneName << " não encontrado!" << std::endl;
     }
 }
+
 // ----- Funções auxiliares para hierarquia de bones -----
 
-// Percorre a hierarquia de nós do Assimp para identificar os ossos e salvar sua transformação local e o relacionamento pai-filho.
-// parentBoneIndex: índice do osso pai (se o nó pai também for um bone); -1 se não houver.
-void Character3D::readHierarchy(const aiNode* node, const aiMatrix4x4 &parentTransform, int parentBoneIndex)
+void Character3D::readHierarchy(const aiNode *node, const aiMatrix4x4 &parentTransform, int parentBoneIndex)
 {
+    // Calcula a transformação acumulada atual multiplicando a transformação do pai com a transformação do nó atual
     aiMatrix4x4 currentTransform = parentTransform * node->mTransformation;
     int currentBoneIndex = parentBoneIndex;
     std::string nodeName(node->mName.C_Str());
 
+    // Se o nó corresponde a um bone, atualiza o índice do bone e salva a transformação local (bind pose)
     if (boneMapping.find(nodeName) != boneMapping.end())
     {
         currentBoneIndex = boneMapping[nodeName];
-        // Define o índice do osso pai (poderá ser -1 se for raiz)
         boneInfo[currentBoneIndex].parentIndex = parentBoneIndex;
-        // Salva a transformação local do nó (bind pose)
         boneInfo[currentBoneIndex].defaultLocalTransform = node->mTransformation;
     }
 
+    // Processa recursivamente os nós filhos
     for (unsigned int i = 0; i < node->mNumChildren; i++)
-    {
         readHierarchy(node->mChildren[i], currentTransform, currentBoneIndex);
-    }
 }
 
-// Função recursiva que calcula a transformação global de um osso a partir de sua transformação local (modificada pela rotação manual)
-// e da transformação global de seu pai.
 aiMatrix4x4 Character3D::computeGlobalTransform(int boneIndex) const
 {
+    // Se o bone é raiz, retorna sua transformação local combinada com a rotação manual
     if (boneInfo[boneIndex].parentIndex == -1)
         return boneInfo[boneIndex].defaultLocalTransform * boneInfo[boneIndex].manualRotation;
     else
-        return computeGlobalTransform(boneInfo[boneIndex].parentIndex) * (boneInfo[boneIndex].defaultLocalTransform * boneInfo[boneIndex].manualRotation);
+        // Caso contrário, multiplica recursivamente a transformação global do pai pela transformação local do bone
+        return computeGlobalTransform(boneInfo[boneIndex].parentIndex) *
+               (boneInfo[boneIndex].defaultLocalTransform * boneInfo[boneIndex].manualRotation);
 }
 
-// Atualiza, para cada bone, sua transformação final usada para skinning:
-// finalTransformation = (transformação global do bone) * (offsetMatrix do bone)
 void Character3D::updateBoneTransforms()
 {
+    // Para cada bone, calcula a transformação global e atualiza sua transformação final para skinning
     for (unsigned int i = 0; i < boneInfo.size(); i++)
     {
         aiMatrix4x4 global = computeGlobalTransform(i);

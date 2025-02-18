@@ -15,59 +15,40 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-/**
- * @brief Estrutura para armazenar vértices, coordenadas de textura e informações de skinning.
- */
 struct Vertex
 {
-    float x, y, z;
-    float u, v;
-    // IDs dos bones que influenciam este vértice (suporta até 4)
-    int boneIDs[4];
-    // Pesos correspondentes a cada bone
-    float weights[4];
+    float x, y, z;    ///< Posição do vértice.
+    float u, v;       ///< Coordenadas de textura.
+    int boneIDs[4];   ///< IDs dos bones que influenciam este vértice (suporta até 4).
+    float weights[4]; ///< Pesos correspondentes a cada bone.
 };
 
-/**
- * @brief Estrutura para armazenar um submesh com seus vértices e textura.
- */
 struct SubMesh
 {
-    std::vector<Vertex> vertices;
-    GLuint textureID;
+    std::vector<Vertex> vertices; ///< Lista de vértices do submesh.
+    GLuint textureID;             ///< ID da textura associada ao submesh.
 };
 
-/**
- * @brief Estrutura para armazenar os dados de um bone.
- *
- * Foram adicionados:
- * - defaultLocalTransform: a transformação local (bind pose) do nó correspondente;
- * - manualRotation: rotação manual aplicada (inicialmente identidade);
- * - parentIndex: índice do osso pai (-1 se não houver);
- * - finalTransformation: transformação final que será aplicada aos vértices.
- */
 struct BoneInfo
 {
-    aiMatrix4x4 offsetMatrix;          
-    aiMatrix4x4 defaultLocalTransform; // transform local (bind pose) extraída do nó
-    aiMatrix4x4 manualRotation;        // rotação manual (inicialmente identidade)
-    aiMatrix4x4 finalTransformation;   // transformação final: (globalTransform * offsetMatrix)
-    int parentIndex;                   // índice do osso pai (-1 se for raiz)
+    aiMatrix4x4 offsetMatrix;          ///< Matriz de transformação do bone para a pose inicial.
+    aiMatrix4x4 defaultLocalTransform; ///< Transformação local do bone na bind pose.
+    aiMatrix4x4 manualRotation;        ///< Rotação manual aplicada ao bone.
+    aiMatrix4x4 finalTransformation;   ///< Transformação final aplicada aos vértices.
+    int parentIndex;                   ///< Índice do bone pai (-1 se for raiz).
 };
 
 class Character3D
 {
 private:
     std::vector<SubMesh> submeshes;           ///< Lista de submeshes do modelo.
-    std::map<std::string, GLuint> textureMap; ///< Cache de texturas.
-
-    // Dados dos bones
+    std::map<std::string, GLuint> textureMap; ///< Cache de texturas carregadas.
     std::map<std::string, int> boneMapping;   ///< Mapeia o nome do bone para seu índice.
-    std::vector<BoneInfo> boneInfo;             ///< Lista de informações de cada bone.
+    std::vector<BoneInfo> boneInfo;           ///< Lista de informações de cada bone.
 
 public:
     /**
-     * @brief Construtor da classe.
+     * @brief Construtor da classe Character3D.
      */
     Character3D();
 
@@ -94,19 +75,39 @@ public:
      */
     void rotateBone(const std::string &boneName, float angle, float axisX, float axisY, float axisZ);
 
-    void rotateBone(const std::string& boneName, const glm::quat& rotation);
+    /**
+     * @brief Rotaciona um bone utilizando um quaternion.
+     * @param boneName Nome do bone a ser rotacionado.
+     * @param rotation Rotação representada como um quaternion glm::quat.
+     */
+    void rotateBone(const std::string &boneName, const glm::quat &rotation);
 
 private:
     /**
      * @brief Carrega uma textura e retorna seu ID no OpenGL.
      * @param path Caminho da textura.
-     * @return GLuint ID da textura.
+     * @return GLuint ID da textura carregada.
      */
     GLuint loadTexture(const std::string &path);
 
-    // Funções auxiliares para atualização da hierarquia dos bones
+    /**
+     * @brief Atualiza as transformações dos bones com base na hierarquia.
+     */
     void updateBoneTransforms();
-    void readHierarchy(const aiNode* node, const aiMatrix4x4 &parentTransform, int parentBoneIndex);
+
+    /**
+     * @brief Lê a hierarquia de bones do modelo e armazena suas transformações.
+     * @param node Nó da cena do Assimp a ser processado.
+     * @param parentTransform Transformação do nó pai.
+     * @param parentBoneIndex Índice do bone pai (-1 se não houver).
+     */
+    void readHierarchy(const aiNode *node, const aiMatrix4x4 &parentTransform, int parentBoneIndex);
+
+    /**
+     * @brief Computa a transformação global de um bone específico.
+     * @param boneIndex Índice do bone.
+     * @return aiMatrix4x4 Matriz de transformação global.
+     */
     aiMatrix4x4 computeGlobalTransform(int boneIndex) const;
 };
 
