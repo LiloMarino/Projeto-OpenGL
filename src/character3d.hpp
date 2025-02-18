@@ -11,7 +11,9 @@
 #include <assimp/postprocess.h>
 #include <assimp/matrix4x4.h>
 #include <assimp/vector3.h>
-#include <cmath> // para sqrt
+#include <cmath>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 /**
  * @brief Estrutura para armazenar vértices, coordenadas de textura e informações de skinning.
@@ -91,6 +93,8 @@ public:
      * @param axisZ Componente Z do eixo.
      */
     void rotateBone(const std::string &boneName, float angle, float axisX, float axisY, float axisZ);
+
+    void rotateBone(const std::string& boneName, const glm::quat& rotation);
 
 private:
     /**

@@ -25,6 +25,15 @@ void Camera3D::applyCamera() const
               0.0, 0.0, 1.0);                        // Vetor "para cima" fixo no eixo Z (Por causa do Blender)
 }
 
+glm::mat4 Camera3D::getViewMatrix() const
+{
+    glm::vec3 eye(eyeX, eyeY, eyeZ);
+    glm::vec3 center(eyeX + dirX, eyeY + dirY, eyeZ + dirZ);
+    glm::vec3 up(0.0f, 0.0f, 1.0f);  // Vetor "para cima"
+    return glm::lookAt(eye, center, up);
+}
+
+
 double Camera3D::calculateFOV(double focalLength, double sensorSize) const
 {
     return 2.0 * atan((sensorSize / 2.0) / focalLength) * (180.0 / M_PI);

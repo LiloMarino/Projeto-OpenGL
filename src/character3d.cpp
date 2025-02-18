@@ -246,6 +246,29 @@ void Character3D::rotateBone(const std::string &boneName, float angle, float axi
     boneInfo[index].manualRotation = createRotationMatrix(angle, axisX, axisY, axisZ);
 }
 
+void Character3D::rotateBone(const std::string &boneName, const glm::quat& rotation)
+{
+    // Verifica se o osso existe no mapa
+    auto it = boneMapping.find(boneName);
+    if (it != boneMapping.end())
+    {
+        int boneIndex = it->second;  // Obtém o índice do osso
+        BoneInfo &bone = boneInfo[boneIndex];
+
+        // Aplica a rotação manual
+        glm::mat4 rotationMatrix = glm::mat4_cast(rotation);  // Converte o quaternion para uma matriz
+
+        // Aplica a rotação ao osso, combinando com a rotação já existente
+        bone.manualRotation = aiMatrix4x4(rotationMatrix[0][0], rotationMatrix[0][1], rotationMatrix[0][2], rotationMatrix[0][3],
+                                          rotationMatrix[1][0], rotationMatrix[1][1], rotationMatrix[1][2], rotationMatrix[1][3],
+                                          rotationMatrix[2][0], rotationMatrix[2][1], rotationMatrix[2][2], rotationMatrix[2][3],
+                                          rotationMatrix[3][0], rotationMatrix[3][1], rotationMatrix[3][2], rotationMatrix[3][3]);
+    }
+    else
+    {
+        std::cerr << "Bone " << boneName << " não encontrado!" << std::endl;
+    }
+}
 // ----- Funções auxiliares para hierarquia de bones -----
 
 // Percorre a hierarquia de nós do Assimp para identificar os ossos e salvar sua transformação local e o relacionamento pai-filho.
