@@ -23,7 +23,7 @@ void display(GLFWwindow *window, const Camera3D &camera, const Character3D &char
     glfwSwapBuffers(window);
 }
 
-void rotateHeadToMouse(GLFWwindow* window, Camera3D& camera, Character3D& character)
+void rotateHeadToMouse(GLFWwindow *window, Character3D &character)
 {
     // Captura a posição atual do mouse na janela
     double mouseX, mouseY;
@@ -38,7 +38,7 @@ void rotateHeadToMouse(GLFWwindow* window, Camera3D& camera, Character3D& charac
     float maxRotationY = glm::radians(60.0f); // Limite de rotação no eixo Y (horizontal)
 
     // Normaliza a posição do mouse dentro da janela
-    float normalizedMouseX = (float)mouseX / (float)windowWidth; // Proporção horizontal do mouse
+    float normalizedMouseX = (float)mouseX / (float)windowWidth;  // Proporção horizontal do mouse
     float normalizedMouseY = (float)mouseY / (float)windowHeight; // Proporção vertical do mouse
 
     // Calcula o ângulo de rotação baseado na posição normalizada do mouse
@@ -47,7 +47,7 @@ void rotateHeadToMouse(GLFWwindow* window, Camera3D& camera, Character3D& charac
 
     // Usando quaternions para aplicar as rotações
     glm::quat rotationXQuat = glm::angleAxis(rotationX, glm::vec3(-1.0f, 0.0f, 0.0f)); // Rotação no eixo X
-    glm::quat rotationYQuat = glm::angleAxis(rotationY, glm::vec3(0.0f, 0.0f, 1.0f)); // Rotação no eixo Y
+    glm::quat rotationYQuat = glm::angleAxis(rotationY, glm::vec3(0.0f, 0.0f, 1.0f));  // Rotação no eixo Y
 
     // Combina as rotações no eixo X e Y
     glm::quat combinedRotation = rotationYQuat * rotationXQuat;
@@ -87,7 +87,7 @@ int main()
     while (!glfwWindowShouldClose(window))
     {
         // Chama a função para rotacionar o bone "Head" para olhar para o mouse
-        rotateHeadToMouse(window, camera, character);
+        rotateHeadToMouse(window, character);
 
         display(window, camera, character);
         glfwPollEvents();
