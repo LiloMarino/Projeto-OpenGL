@@ -49,12 +49,19 @@ int main()
 
     init();
 
-    // Ângulo de rotação para o bone (poderia ser controlado pelo tempo ou input do usuário)
+    // Ângulo de rotação para o bone
     float angle = 0.0f;
 
     while (!glfwWindowShouldClose(window))
     {
-        // Exemplo: se a tecla R for pressionada, rotaciona o bone (altere "BoneName" para o nome do seu bone)
+        // Captura a posição do mouse
+        double mouseX, mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
+        // Imprime a posição do mouse
+        std::cout << "Mouse Position: X = " << mouseX << ", Y = " << mouseY << std::endl;
+
+        // Exemplo: se a tecla R for pressionada, rotaciona o bone
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
         {
             angle += 1.0f; // aumenta o ângulo
@@ -68,3 +75,4 @@ int main()
     glfwTerminate();
     return 0;
 }
+
