@@ -16,10 +16,8 @@ void init()
 void display(GLFWwindow *window, const Camera3D &camera, const Character3D &character)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     camera.applyCamera();
     character.draw();
-
     glfwSwapBuffers(window);
 }
 
@@ -51,8 +49,18 @@ int main()
 
     init();
 
+    // Ângulo de rotação para o bone (poderia ser controlado pelo tempo ou input do usuário)
+    float angle = 0.0f;
+
     while (!glfwWindowShouldClose(window))
     {
+        // Exemplo: se a tecla R for pressionada, rotaciona o bone (altere "BoneName" para o nome do seu bone)
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        {
+            angle += 1.0f; // aumenta o ângulo
+            character.rotateBone("Head", angle, 0.0f, 0.0f, 1.0f);
+        }
+
         display(window, camera, character);
         glfwPollEvents();
     }
