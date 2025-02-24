@@ -23,6 +23,22 @@ void display(GLFWwindow *window, const Camera3D &camera, const Character3D &char
     glfwSwapBuffers(window);
 }
 
+void keyboardEvents(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if(action == GLFW_PRESS || action == GLFW_REPEAT)
+    {
+        switch(key)
+        {
+        case GLFW_KEY_ESCAPE:
+            exit(0);
+            break;
+        
+        default:
+            break;
+        }
+    }
+}
+
 void rotateHeadToMouse(GLFWwindow *window, Character3D &character)
 {
     // Captura a posição atual do mouse na janela
@@ -73,6 +89,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetKeyCallback(window, keyboardEvents);
 
     Camera3D camera(0.0, -9.0, 16.0, 90.0, 0.0, 0.0, 50.0, 36.0, 800.0 / 600.0, 0.1, 1000.0);
     Character3D character;
