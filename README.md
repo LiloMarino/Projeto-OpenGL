@@ -13,7 +13,7 @@ Para compilar e executar este projeto, você precisa das seguintes bibliotecas:
 Execute o seguinte comando no terminal:
 ```bash
 sudo apt update
-sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev
+sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev freeglut3-dev
 ```
 ou
 ```bash

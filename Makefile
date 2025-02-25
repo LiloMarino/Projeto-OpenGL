@@ -45,7 +45,7 @@ $(BUILD_DIR)/glad.o: $(GLAD_SOURCE)
 # Instalar dependências automaticamente
 install_deps:
 	sudo apt update
-	sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev
+	sudo apt install -y libglfw3-dev libassimp-dev libgl1-mesa-dev libglew-dev freeglut3-dev
 
 # Alvo para limpar os arquivos gerados
 clean:
