@@ -7,6 +7,9 @@
 #include <glm/gtc/quaternion.hpp>
 #include "camera3d.hpp"
 #include "character3d.hpp"
+#include "light.hpp"
+
+Light lightning;
 
 void init()
 {
@@ -19,6 +22,7 @@ void display(GLFWwindow *window, const Camera3D &camera, const Character3D &char
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     camera.applyCamera();
+    lightning.apply();
     character.draw();
     glfwSwapBuffers(window);
 }
@@ -31,6 +35,14 @@ void keyboardEvents(GLFWwindow* window, int key, int scancode, int action, int m
         {
         case GLFW_KEY_ESCAPE:
             exit(0);
+            break;
+
+        case GLFW_KEY_UP:
+            lightning.setMoreBrightness();
+            break;
+
+        case GLFW_KEY_DOWN:
+            lightning.setLessBrightness();
             break;
         
         default:
