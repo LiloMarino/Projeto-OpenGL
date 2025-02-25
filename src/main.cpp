@@ -2,14 +2,17 @@
 #include "stb_image.h"
 
 #include <iostream>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "camera3d.hpp"
 #include "character3d.hpp"
 #include "light.hpp"
+#include "background.hpp"
 
 Light lightning(1.0, 0.0, 16.0, LUZ_PONTUAL);
+Background background;
 bool exitFlag = false;
 
 void init()
@@ -24,6 +27,7 @@ void display(GLFWwindow *window, const Camera3D &camera, const Character3D &char
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     camera.applyCamera();
     lightning.apply();
+    background.draw();
     character.draw();
     glfwSwapBuffers(window);
 }
@@ -93,7 +97,7 @@ int main()
         return -1;
     }
 
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Modelo com Textura", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(800, 600, "Mita", nullptr, nullptr);
     if (!window)
     {
         std::cerr << "Falha ao criar janela GLFW" << std::endl;
@@ -113,6 +117,11 @@ int main()
     }
 
     init();
+
+    if(!background.loadTexture("assets/fundo.png"))
+    {
+        return -1;
+    }
 
     while(!glfwWindowShouldClose(window) && !exitFlag)
     {
