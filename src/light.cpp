@@ -1,8 +1,18 @@
 #include "light.hpp"
+#include <iostream>
 
 const GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
 const GLfloat black[] = {0.0, 0.0, 0.0, 1.0};
-const GLfloat light0_pos[] = {5.0f, 10.0f, 2.0f, 1.0f};
+
+Light::Light(GLfloat x, GLfloat y, GLfloat z, GLfloat tipo)
+{
+    light0_pos[0] = x;
+    light0_pos[1] = y;
+    light0_pos[2] = z;
+    light0_pos[3] = tipo;
+}
+
+Light::~Light(){}
 
 void Light::apply()
 {

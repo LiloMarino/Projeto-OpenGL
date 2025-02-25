@@ -9,7 +9,8 @@
 #include "character3d.hpp"
 #include "light.hpp"
 
-Light lightning;
+Light lightning(1.0, 0.0, 16.0, LUZ_PONTUAL);
+bool exitFlag = false;
 
 void init()
 {
@@ -34,7 +35,7 @@ void keyboardEvents(GLFWwindow* window, int key, int scancode, int action, int m
         switch(key)
         {
         case GLFW_KEY_ESCAPE:
-            exit(0);
+            exitFlag = true;
             break;
 
         case GLFW_KEY_UP:
@@ -113,7 +114,7 @@ int main()
 
     init();
 
-    while (!glfwWindowShouldClose(window))
+    while(!glfwWindowShouldClose(window) && !exitFlag)
     {
         // Chama a função para rotacionar o bone "Head" para olhar para o mouse
         rotateHeadToMouse(window, character);
